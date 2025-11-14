@@ -1,4 +1,4 @@
-import pika, time
+import pika, time, sys, os
 from flask import Flask, Response, jsonify, request
 import requests, threading
 
@@ -75,12 +75,14 @@ def main():
     leilao_vencedor_queue = channel.queue_declare(queue='', exclusive=True)
     link_pagamento_queue = channel.queue_declare(queue='', exclusive=True)
     status_pagamento_queue = channel.queue_declare(queue='', exclusive=True)
-    channel.exchange_declare(exchange='notificacao', exchange_type='direct')
-    channel.queue_bind(exchange='notificacao', queue=lance_validado_queue.method.queue, routing_key='lance_validado')
-    channel.queue_bind(exchange='notificacao', queue=lance_invalidado_queue.method.queue, routing_key='lance_invalidado')
-    channel.queue_bind(exchange='notificacao', queue=leilao_vencedor_queue.method.queue, routing_key='leilao_vencedor')
-    channel.queue_bind(exchange='notificacao', queue=link_pagamento_queue.method.queue, routing_key='link_pagamento')
-    channel.queue_bind(exchange='notificacao', queue=status_pagamento_queue.method.queue, routing_key='status_pagamento')
+    channel.exchange_declare(exchange='leilao', exchange_type='direct')
+    channel.exchange_declare(exchange='lances', exchange_type='direct')
+    channel.exchange_declare(exchange='pagamento', exchange_type='direct')
+    channel.queue_bind(exchange='lances', queue=lance_validado_queue.method.queue, routing_key='validado')
+    channel.queue_bind(exchange='lances', queue=lance_invalidado_queue.method.queue, routing_key='invalidado')
+    channel.queue_bind(exchange='leilao', queue=leilao_vencedor_queue.method.queue, routing_key='vencedor')
+    channel.queue_bind(exchange='pagamento', queue=link_pagamento_queue.method.queue, routing_key='link_pagamento')
+    channel.queue_bind(exchange='pagamento', queue=status_pagamento_queue.method.queue, routing_key='status_pagamento')
 
     def callback(ch, method, properties, body):
         notification = {'type': method.routing_key, 'message': body.decode()}
@@ -95,6 +97,11 @@ def main():
     channel.start_consuming()
 
 if __name__ == "__main__":
-    #threading.Thread(target=main, daemon=True).start()
-
-    app.run("localhost", port=5000)
+    try:
+        threading.Thread(target=main, daemon=True).start()
+        app.run("localhost", port=5000)
+    except KeyboardInterrupt:
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0)

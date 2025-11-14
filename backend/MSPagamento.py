@@ -3,56 +3,60 @@ import requests
 from ast import literal_eval
 import pika
 from flask import Flask, request, jsonify
-import json
+import json, sys, os
 
 app = Flask(__name__)
 
 @app.route("/payment/notify", methods=['POST'])
 def payment_notify():
     data = request.get_json()
+    
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat=100))
+    channel2 = connection.channel()
+
+    status_pagamento_queue = channel2.queue_declare(queue='', exclusive=True)
+    channel2.exchange_declare(exchange='pagamento', exchange_type='direct')
+    channel2.queue_bind(exchange='pagamento', queue=status_pagamento_queue.method.queue, routing_key='status_pagamento')
+
+    print(f" [x] Payment status: {data['status']} for auction {data['id_leilao']}\n")
+    channel2.basic_publish(exchange='pagamento', routing_key='status_pagamento', body=str({
+        "id_leilao": data['id_leilao'],
+        "status": data['status'],
+        "amount": data['amount'],
+        "id_user": data['id_user']
+    }))
+
     print(f" [x] Payment notification received: {data}\n")
     return 'Notification received', 200
 
 def main():
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat=100))
     channel = connection.channel()
-
+    
+    link_pagamento_queue = channel.queue_declare(queue='', exclusive=True)
     vencedor = channel.queue_declare(queue='', exclusive=True)
     channel.exchange_declare(exchange='leilao', exchange_type='direct')
+    channel.exchange_declare(exchange='pagamento', exchange_type='direct')
+    channel.queue_bind(exchange='pagamento', queue=link_pagamento_queue.method.queue, routing_key='link_pagamento')
     channel.queue_bind(exchange='leilao', queue=vencedor.method.queue, routing_key='vencedor')
 
     def callback(ch, method, properties, body):
         data = literal_eval(body.decode())
-
-        body = json.dumps(
-            {
+        body = {
+            "id_leilao": data['id_leilao'],
             "amount": data['valor_vencedor'],
-            "custom_code": "YOURAPPCODE",
-            "notification_url": "https://your.endpoint.to.update",
-            "beneficiary": {
-                "name": "The Name",
-                "bank_code": "147",
-                "bank_branch": "0000",
-                "bank_branch_digit": "1",
-                "account": "1030000",
-                "account_digit": "1",
-                "account_type": "CHECKING",
-                "document": "12533009091",
-                "document_type": "cpf",
-                "pix_key": "userpixkey@user.com",
-                "city": "Curitiba",
-                "province_code": "PR",
-                "address": "Rua a Número 10"
-                },
-            "legal_entity_name": "Your client's name",
-            "website": "Your client's website",
-            "merchant_id": 27683029.04591699,
-            "source_currency": "USD"
-            }
-        )
-        response = requests.post("https://api.wepayout.com.br/v1/payout/payments", json=body)
+            "webhook_url": "http://localhost:5003/payment/notify"
+        }
+        response = requests.post("http://localhost:5004/generate_payment_link", json=body)
+        payment_data = response.json()
         if response.status_code == 201:
-            print(f" [x] Payment link created for auction {data['id_leilao']}: {response.json()}\n")
+            print(f" [x] Payment link created for auction {data['id_leilao']}\n")
+            channel.basic_publish(exchange='pagamento', routing_key='link_pagamento', body=str({
+                "id_leilao": data['id_leilao'],
+                "payment_link": payment_data['payment_link'],
+                "amount": payment_data['amount'],
+                "currency": payment_data['currency']
+            }))
         else:
             print(f" [ ] Failed to create payment link for auction {data['id_leilao']}\n")
 
@@ -60,5 +64,11 @@ def main():
     channel.start_consuming()
 
 if __name__ == "__main__":
-    threading.Thread(target=main, daemon=True).start()
-    app.run("localhost", port=5003)
+    try:
+        threading.Thread(target=main, daemon=True).start()
+        app.run("localhost", port=5003)
+    except KeyboardInterrupt:
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0)

@@ -1,4 +1,4 @@
-import pika, time, threading, json
+import pika, time, threading, json, sys, os
 from datetime import datetime
 from flask import Flask, jsonify, Response, request, make_response
 
@@ -22,7 +22,6 @@ Estrutura JSON do leilão:
 @app.route("/auction/create", methods=['POST'])
 def create_auction():
     data = request.get_json()
-    print(data)
     if all(key in data for key in ("nome", "descricao", "valor_inicial", "data_hora_inicio", "data_hora_fim")):
         data["status"] = "inativo"
         data['id'] = len(leiloes) + 1
@@ -55,7 +54,9 @@ def main():
     while True:
         for leilao in leiloes:
             now = datetime.now()
-            if leilao["status"] == "inativo" and leilao['data_hora_inicio'] <= now.strftime("%Y-%m-%d %H:%M:%S"):
+            inicio = datetime.strptime(leilao['data_hora_inicio'], "%Y-%m-%d %H:%M:%S")
+            fim = datetime.strptime(leilao['data_hora_fim'], "%Y-%m-%d %H:%M:%S")
+            if leilao["status"] == "inativo" and inicio <= now:
                 leilao["status"] = "ativo"
                 
                 with open("logs/leiloes.log", "w") as f:
@@ -69,7 +70,7 @@ def main():
                 channel.basic_publish(exchange='leilao', routing_key='iniciado', body=str(body))
                 print(f" [x] Leilão iniciado: {leilao['descricao']}\n")
 
-            elif leilao["status"] == "ativo" and leilao['data_hora_fim'] <= now.strftime("%Y-%m-%d %H:%M:%S"):
+            elif leilao["status"] == "ativo" and fim <= now:
                 leilao["status"] = "finalizado"
 
                 with open("logs/leiloes.log", "w") as f:
@@ -84,6 +85,11 @@ def main():
         time.sleep(1)
 
 if __name__ == "__main__":
-    threading.Thread(target=main, daemon=True).start()
-
-    app.run("localhost", port=5001)
+    try:
+        threading.Thread(target=main, daemon=True).start()
+        app.run("localhost", port=5001)
+    except KeyboardInterrupt:
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0)
