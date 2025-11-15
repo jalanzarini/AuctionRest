@@ -9,22 +9,16 @@ const startTime = ref(startDate.value.getHours()+":"+startDate.value.getMinutes(
 const endDate = ref(new Date());
 const endTime = ref(endDate.value.getHours()+":"+endDate.value.getMinutes());
 
-function createAuction(){
-  let [startHour, startMinute] = startTime.value.split(":");
-  let startDateTime = startDate.value;
-  startDateTime.setHours(startHour);
-  startDateTime.setMinutes(startMinute);
+function formatDate(date, time){
+  return `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()} ${time}:00`;
+}
 
-  let [endHour, endMinute] = endTime.value.split(":");
-  let endDateTime = endDate.value;
-  endDateTime.setHours(endHour);
-  endDateTime.setMinutes(endMinute);
-  
+function createAuction(){    
   let data = {
     name: name.value,
     description: description.value,
-    startDateTime: startDateTime,
-    endDateTime: endDateTime,
+    startDateTime: formatDate(startDate.value, startTime.value),
+    endDateTime: formatDate(endDate.value, endTime.value),
   };
 
   console.log(data);
@@ -40,18 +34,18 @@ function createAuction(){
 </script>
 
 <template>
-  <v-container width="300">
-  <v-form>
-    <v-text-field label="Name" v-model="name"></v-text-field>
-    <v-text-field label="Description" v-model="description"></v-text-field>
-    <DatePicker label="Start Date" v-model="startDate"></DatePicker>
-    <TimePicker label="Start Time" v-model="startTime"></TimePicker>
-    <DatePicker label="End Date" v-model="endDate"></DatePicker>
-    <TimePicker label="End Time" v-model="endTime"></TimePicker>
-  </v-form>
-  <v-row class="d-flex justify-end">
-    <v-btn @click="createAuction">Create</v-btn>
-  </v-row>
+  <v-container class="d-flex flex-column justify-space-between">
+    <v-form>
+      <v-text-field label="Name" v-model="name"></v-text-field>
+      <v-text-field label="Description" v-model="description"></v-text-field>
+      <DatePicker label="Start Date" v-model="startDate"></DatePicker>
+      <TimePicker label="Start Time" v-model="startTime"></TimePicker>
+      <DatePicker label="End Date" v-model="endDate"></DatePicker>
+      <TimePicker label="End Time" v-model="endTime"></TimePicker>
+    </v-form>
+    <v-row class="d-flex justify-end">
+      <v-btn @click="createAuction">Create</v-btn>
+    </v-row>
   </v-container>
 </template>
 

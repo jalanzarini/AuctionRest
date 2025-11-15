@@ -5,23 +5,28 @@ import AuctionWizard from './AuctionWizard.vue';
 </script>
 
 <template>
-  <v-row>
-    <v-col cols="3" class="d-flex justify-center align-center">
-      <v-card title="Auction Wizard" variant="outlined">
-        <AuctionWizard/>
-      </v-card>
-    </v-col>
-    <v-col cols="3" class="d-flex justify-center align-center">
-      <v-card title="Auction List" variant="outlined">
-        <AuctionList/>
-      </v-card>
-    </v-col>
-    <v-col cols="6" class="d-flex justify-center align-center">
-        <v-card title="Message List" variant="outlined">
-          <MessageList/>
-        </v-card>
-    </v-col>
-  </v-row>
+  <layout class="rounded rounded-md border">
+    <v-app-bar title="Front"></v-app-bar>
+    <v-navigation-drawer width="500">
+      <v-list nav>
+        <v-list-item title="Auction Wizard"></v-list-item>
+        <v-divider></v-divider>
+        <AuctionWizard></AuctionWizard>
+      </v-list>
+    </v-navigation-drawer>
+
+    <v-navigation-drawer location="right" width="400">
+      <v-list nav>
+        <v-list-item title="Auction List"></v-list-item>
+        <v-divider></v-divider>
+        <AuctionList></AuctionList>
+      </v-list>
+    </v-navigation-drawer>
+
+    <v-main class="d-flex align-center justify-center" height="300">
+      <MessageList></MessageList>
+    </v-main>
+  </layout>
 </template>
 
 <style scoped>

@@ -233,7 +233,7 @@ const messages = [
 
 <template>
   <v-container>
-    <v-list max-height="700">
+    <v-list>
       <v-list-item v-for="message in messages">
         <v-list-item-title>{{ message.auction.name + " " + message.message }}</v-list-item-title>
       </v-list-item>
