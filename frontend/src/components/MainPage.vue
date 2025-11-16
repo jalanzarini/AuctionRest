@@ -2,31 +2,30 @@
 import MessageList from './MessageList.vue';
 import AuctionList from './AuctionList.vue';
 import AuctionWizard from './AuctionWizard.vue';
+import BidWizard from './BidWizard.vue';
 </script>
 
 <template>
-  <layout class="rounded rounded-md border">
-    <v-app-bar title="Front"></v-app-bar>
-    <v-navigation-drawer width="500">
-      <v-list nav>
-        <v-list-item title="Auction Wizard"></v-list-item>
-        <v-divider></v-divider>
-        <AuctionWizard></AuctionWizard>
-      </v-list>
-    </v-navigation-drawer>
-
-    <v-navigation-drawer location="right" width="400">
-      <v-list nav>
-        <v-list-item title="Auction List"></v-list-item>
-        <v-divider></v-divider>
-        <AuctionList></AuctionList>
-      </v-list>
-    </v-navigation-drawer>
-
-    <v-main class="d-flex align-center justify-center" height="300">
-      <MessageList></MessageList>
-    </v-main>
-  </layout>
+    <v-container>
+        <v-row>
+            <v-col cols='3'>
+                <h2>Auction List</h2>
+                    <AuctionList height="800" class="overflow-auto"></AuctionList>
+            </v-col>
+            <v-divider vertical></v-divider>
+            <v-col cols='6'>
+                <h2>Messages</h2>
+                <MessageList height='800' class="overflow-auto"></MessageList>
+            </v-col>
+            <v-divider vertical></v-divider>
+            <v-col cols='3'>
+                <h2>Auction Wizard</h2>
+                <AuctionWizard></AuctionWizard>
+                <h2>Bid</h2>
+                <BidWizard></BidWizard>
+            </v-col>
+        </v-row>
+    </v-container>
 </template>
 
 <style scoped>

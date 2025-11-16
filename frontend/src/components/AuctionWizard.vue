@@ -38,12 +38,16 @@ function createAuction(){
     <v-form>
       <v-text-field label="Name" v-model="name"></v-text-field>
       <v-text-field label="Description" v-model="description"></v-text-field>
-      <DatePicker label="Start Date" v-model="startDate"></DatePicker>
-      <TimePicker label="Start Time" v-model="startTime"></TimePicker>
-      <DatePicker label="End Date" v-model="endDate"></DatePicker>
-      <TimePicker label="End Time" v-model="endTime"></TimePicker>
+      <v-row class="mx-1">
+          <DatePicker label="Start Date" v-model="startDate"></DatePicker>
+          <TimePicker label="Start Time" v-model="startTime"></TimePicker>
+      </v-row>
+      <v-row class="mx-1">
+          <DatePicker label="End Date" v-model="endDate"></DatePicker>
+          <TimePicker label="End Time" v-model="endTime"></TimePicker>
+      </v-row>
     </v-form>
-    <v-row class="d-flex justify-end">
+    <v-row class="mt-3 d-flex justify-end">
       <v-btn @click="createAuction">Create</v-btn>
     </v-row>
   </v-container>
