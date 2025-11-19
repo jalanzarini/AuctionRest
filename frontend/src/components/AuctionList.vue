@@ -1,37 +1,40 @@
 <script setup>
-import { ref } from 'vue';
+import { ref } from "vue";
 const auctions = ref(null);
+const response = await fetch("http://localhost:5000/auction/consult", {
+  method: "GET",
+});
+auctions.value = await response.json();
 
-auctions.value = [
-     {
-         title: 'Auction',
-         subscribed: false,
-     },
-     {
-         title: 'Auction',
-         subscribed: false,
-     },
-     {
-         title: 'Auction',
-         subscribed: false,
-     },
-     {
-         title: 'Auction',
-         subscribed: true,
-     },
-     {
-         title: 'Auction',
-         subscribed: false,
-     },
- ];
+function subscribe(index) {
+  const data = {
+    id_leilao: index,
+    id_user: 0, //MATH.rand algum dia
+  };
 
- function subscribe(index){
+  fetch("http://localhost:5000/auction/interest", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+}
 
- }
+function unsubscribe(index) {
+  const data = {
+    id_leilao: index,
+    id_user: 0, //MATH.rand algum dia
+  };
 
- function unsubscribe(index){
-
- }
+  fetch("http://localhost:5000/auction/uninterest", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+}
 </script>
 
 <template>
@@ -40,16 +43,17 @@ auctions.value = [
       <template v-for="(auction, index) in auctions">
         <v-divider v-if="index != 0"></v-divider>
         <v-list-item>
-            <template v-slot:append>
-                <v-btn v-if='auction.subscribed' @click="subscribe(index)">Subscribe</v-btn>
-                <v-btn v-else @click='unsubscribe(index)'>Unsubscribe</v-btn>
-            </template>
-            <template v-slot:default>{{ auction.title}}</template>
+          <template v-slot:append>
+            <v-btn @click="subscribe(auction.id)">SUB</v-btn>
+            <v-btn class="mr-1" @click="unsubscribe(auction.id)">UNSUB</v-btn>
+          </template>
+          <template v-slot:default>{{
+            "ID: " + auction.id + " - " + auction.nome
+          }}</template>
         </v-list-item>
       </template>
     </v-list>
   </v-container>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>
