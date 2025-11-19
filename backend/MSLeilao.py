@@ -1,8 +1,10 @@
 import pika, time, threading, json, sys, os
 from datetime import datetime
 from flask import Flask, jsonify, Response, request, make_response
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 leiloes = []
 

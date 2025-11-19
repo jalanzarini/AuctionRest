@@ -1,7 +1,9 @@
 from flask import Flask, Response, request, jsonify
 import json, requests, sys, os
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 leiloes = []
 

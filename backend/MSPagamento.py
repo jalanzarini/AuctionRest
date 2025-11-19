@@ -4,8 +4,10 @@ from ast import literal_eval
 import pika
 from flask import Flask, request, jsonify
 import json, sys, os
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route("/payment/notify", methods=['POST'])
 def payment_notify():

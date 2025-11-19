@@ -1,8 +1,10 @@
 import pika, time, sys, os
 from flask import Flask, Response, jsonify, request
 import requests, threading
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app, allow_headers=["Content-Type"])
 
 interests = {}
 notifications = []

@@ -2,8 +2,10 @@ import json
 import pika, os, sys, threading
 from flask import Flask, request
 from ast import literal_eval
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 leiloes = []
 lances = []
