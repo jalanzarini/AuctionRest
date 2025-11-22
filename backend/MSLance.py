@@ -25,8 +25,8 @@ def make_bid():
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat=100))
     channel = connection.channel()
 
-    invalidado = channel.queue_declare(queue='lance_invalidado', exclusive=True)
-    validado = channel.queue_declare(queue='lance_validado', exclusive=True)
+    invalidado = channel.queue_declare(queue='lance_invalidado', exclusive=False)
+    validado = channel.queue_declare(queue='lance_validado', exclusive=False)
     channel.exchange_declare(exchange='lances', exchange_type='direct')
     channel.queue_bind(exchange='lances', queue=invalidado.method.queue, routing_key='invalidado')
     channel.queue_bind(exchange='lances', queue=validado.method.queue, routing_key='validado')

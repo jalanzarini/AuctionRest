@@ -1,14 +1,21 @@
-import pika, time, sys, os
-from flask import Flask, Response, jsonify, request
+import pika, time, sys, os, json
+from flask import Flask, Response, jsonify, request, render_template
 import requests, threading
 from flask_cors import CORS
+from ast import literal_eval
+from flask_sse import sse
 
 app = Flask(__name__)
 CORS(app, allow_headers=["Content-Type"])
+app.config["REDIS_URL"] = "redis://localhost"
+app.register_blueprint(sse, url_prefix='/stream')
 
 interests = {}
-notifications = []
 
+""" @app.route("/")
+def index():
+    return render_template("index.html")
+ """
 @app.route("/auction/create", methods=['POST'])
 def create_auction():
     url = "http://localhost:5001/auction/create"
@@ -38,6 +45,10 @@ def set_interest():
                 if request.get_json()['id_user'] not in interests:
                     interests[request.get_json()['id_user']] = []
                 interests[request.get_json()['id_user']].append(request.get_json()['id_leilao'])
+
+                with open("logs/interests.log", "w") as f:
+                    json.dump(interests, f, indent=4)
+
                 response = Response(response="Interesse registrado com sucesso", status=200)
 
             else:
@@ -59,16 +70,11 @@ def remove_interest():
         response = Response(response="Interesse não encontrado", status=404)
     return response
 
-@app.route('/stream')
-def stream():
-    channel = request.args.get('channel')
-    def event_stream():
-        while True:
-            for notification in notifications:
-                if notification['id_leilao'] in interests.get(channel, []):
-                    yield f'data: {notification}\n\n'
-            time.sleep(1)
-    return Response(event_stream(), content_type='text/event-stream')
+@app.route("/publish/<channel>", methods=["POST"])
+def publish_sse(channel):
+    data = request.get_json()
+    sse.publish({'message': data}, type="message", channel=channel)
+    return Response(status=200)
 
 def main():
     channel = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat=100)).channel()
@@ -87,9 +93,15 @@ def main():
     channel.queue_bind(exchange='pagamento', queue=status_pagamento_queue.method.queue, routing_key='status_pagamento')
 
     def callback(ch, method, properties, body):
-        notification = {'type': method.routing_key, 'message': body.decode()}
-        notifications.append(notification)
-        print(f" [x] Notificação recebida: {notification}\n")
+        data = literal_eval(body.decode())
+        for user in interests:
+            if data['id_leilao'] in interests[user]:
+                data['type'] = method.routing_key
+                requests.post(f"http://localhost:5000/publish/{user}", json=data)
+        
+        with open("logs/notifications.log", "w") as f:
+            json.dump(data, f, indent=4)
+        print(f" [x] Notificação recebida: {data}\n")
 
     channel.basic_consume(queue=lance_validado_queue.method.queue, on_message_callback=callback, auto_ack=True)
     channel.basic_consume(queue=lance_invalidado_queue.method.queue, on_message_callback=callback, auto_ack=True)
@@ -97,6 +109,10 @@ def main():
     channel.basic_consume(queue=link_pagamento_queue.method.queue, on_message_callback=callback, auto_ack=True)
     channel.basic_consume(queue=status_pagamento_queue.method.queue, on_message_callback=callback, auto_ack=True)
     channel.start_consuming()
+
+def run():
+    threading.Thread(target=main, daemon=True).start()
+    app.run("localhost", port=5000)
 
 if __name__ == "__main__":
     try:

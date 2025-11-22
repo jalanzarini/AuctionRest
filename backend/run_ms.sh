@@ -1,7 +1,7 @@
 #!/bin/zsh
 
 echo "Starting APIGateway.py in the background..."
-alacritty --working-directory ~/Faculdade/SistDist/AuctionRest/backend/ -e uv run APIGateway.py &
+alacritty --working-directory ~/Faculdade/SistDist/AuctionRest/backend/ -e uv run gunicorn 'APIGateway:run()' &
 
 echo "Starting MSLeilao.py in the background..."
 alacritty --working-directory ~/Faculdade/SistDist/AuctionRest/backend/ -e uv run MSLeilao.py &
