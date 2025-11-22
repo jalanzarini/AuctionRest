@@ -94,6 +94,7 @@ def main():
 
     def callback(ch, method, properties, body):
         data = literal_eval(body.decode())
+        print("TEXTO: ", data, interests)
         for user in interests:
             if data['id_leilao'] in interests[user]:
                 data['type'] = method.routing_key
@@ -116,8 +117,9 @@ def run():
 
 if __name__ == "__main__":
     try:
-        threading.Thread(target=main, daemon=True).start()
-        app.run("localhost", port=5000)
+        #threading.Thread(target=main, daemon=True).start()
+        #app.run("localhost", port=5000)
+        main()
     except KeyboardInterrupt:
         try:
             sys.exit(0)

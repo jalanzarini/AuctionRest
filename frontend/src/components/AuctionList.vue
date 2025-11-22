@@ -6,7 +6,7 @@ const auctions = ref(null);
 updateList();
 
 async function updateList() {
-  const response = await fetch("http://localhost:8000/auction/consult", {
+  const response = await fetch("http://localhost:5000/auction/consult", {
     method: "GET",
   });
   auctions.value = await response.json();
@@ -18,7 +18,7 @@ function subscribe(index) {
     id_user: props.userId,
   };
 
-  fetch("http://localhost:8000/auction/interest", {
+  fetch("http://localhost:5000/auction/interest", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -33,7 +33,7 @@ function unsubscribe(index) {
     id_user: props.userId,
   };
 
-  fetch("http://localhost:8000/auction/uninterest", {
+  fetch("http://localhost:5000/auction/uninterest", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

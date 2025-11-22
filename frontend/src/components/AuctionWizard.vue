@@ -27,7 +27,7 @@ function createAuction() {
     data_hora_fim: formatDate(endDate.value, endTime.value),
   };
 
-  fetch("http://localhost:8000/auction/create", {
+  fetch("http://localhost:5000/auction/create", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -1,10 +1,7 @@
 #!/bin/bash
-
-echo "Starting RabbitMQ in the background..."
-alacritty --working-directory ./ -e uv run gunicorn 'APIGateway:run()' &
-
-echo "Starting APIGateway.py in the background..."
-alacritty --working-directory ./ -e uv run gunicorn 'APIGateway:run()' &
+#uv run gunicorn 'APIGateway:run()' -k gevent --threads=2
+#sudo docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:4-management
+sudo docker compose up -d
 
 echo "Starting MSLeilao.py in the background..."
 alacritty --working-directory ./ -e uv run MSLeilao.py &

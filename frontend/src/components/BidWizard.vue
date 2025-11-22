@@ -11,7 +11,7 @@ function createBid() {
     valor_lance: value.value,
   };
 
-  fetch("http://localhost:8000/bid/make", {
+  fetch("http://localhost:5000/bid/make", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
