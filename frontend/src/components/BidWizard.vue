@@ -1,26 +1,23 @@
 <script setup>
 import { ref } from "vue";
+const props = defineProps(["userId"]);
 const auctionId = ref(null);
 const value = ref(null);
 
 function createBid() {
   let data = {
-    auctionId: auctionId.value,
-    value: value.value,
+    id_leilao: auctionId.value,
+    id_user: props.userId,
+    valor_lance: value.value,
   };
 
-  console.log(data);
-
-  fetch("teste.com", {
+  fetch("http://localhost:8000/bid/make", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
   });
-
-  auctionId.value = null;
-  value.value = null;
 }
 </script>
 

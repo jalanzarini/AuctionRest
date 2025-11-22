@@ -1,18 +1,24 @@
 <script setup>
 import { ref } from "vue";
+const props = defineProps(["userId"]);
 const auctions = ref(null);
-const response = await fetch("http://localhost:5000/auction/consult", {
-  method: "GET",
-});
-auctions.value = await response.json();
+
+updateList();
+
+async function updateList() {
+  const response = await fetch("http://localhost:8000/auction/consult", {
+    method: "GET",
+  });
+  auctions.value = await response.json();
+}
 
 function subscribe(index) {
   const data = {
     id_leilao: index,
-    id_user: 0, //MATH.rand algum dia
+    id_user: props.userId,
   };
 
-  fetch("http://localhost:5000/auction/interest", {
+  fetch("http://localhost:8000/auction/interest", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -24,10 +30,10 @@ function subscribe(index) {
 function unsubscribe(index) {
   const data = {
     id_leilao: index,
-    id_user: 0, //MATH.rand algum dia
+    id_user: props.userId,
   };
 
-  fetch("http://localhost:5000/auction/uninterest", {
+  fetch("http://localhost:8000/auction/uninterest", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -47,12 +53,13 @@ function unsubscribe(index) {
             <v-btn @click="subscribe(auction.id)">SUB</v-btn>
             <v-btn class="mr-1" @click="unsubscribe(auction.id)">UNSUB</v-btn>
           </template>
-          <template v-slot:default>{{
-            "ID: " + auction.id + " - " + auction.nome
-          }}</template>
+          <template v-slot:default>
+            {{ "ID: " + auction.id + " - " + auction.nome }}
+          </template>
         </v-list-item>
       </template>
     </v-list>
+    <v-btn @click="updateList">Refresh List</v-btn>
   </v-container>
 </template>
 
