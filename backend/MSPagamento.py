@@ -13,7 +13,7 @@ CORS(app)
 def payment_notify():
     data = request.get_json()
     
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat=100))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat=0))
     channel2 = connection.channel()
 
     status_pagamento_queue = channel2.queue_declare(queue='', exclusive=True)
@@ -32,7 +32,7 @@ def payment_notify():
     return 'Notification received', 200
 
 def main():
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat=100))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat=0))
     channel = connection.channel()
     
     link_pagamento_queue = channel.queue_declare(queue='', exclusive=True)
@@ -57,7 +57,8 @@ def main():
                 "id_leilao": data['id_leilao'],
                 "payment_link": payment_data['payment_link'],
                 "amount": payment_data['amount'],
-                "currency": payment_data['currency']
+                "currency": payment_data['currency'],
+                "id_user": data['id_user_vencedor']
             }))
         else:
             print(f" [ ] Failed to create payment link for auction {data['id_leilao']}\n")

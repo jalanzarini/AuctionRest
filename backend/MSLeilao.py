@@ -44,7 +44,7 @@ def consult_auctions():
 # ======================================================================================================================================
 
 def main():
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat=100))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat=0))
     channel = connection.channel()
 
     iniciado_queue = channel.queue_declare(queue='', exclusive=True)

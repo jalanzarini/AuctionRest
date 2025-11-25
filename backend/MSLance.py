@@ -22,7 +22,7 @@ Estrutura JSON do lance:
 def make_bid():
     data = request.get_json()
 
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat=100))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat=0))
     channel = connection.channel()
 
     invalidado = channel.queue_declare(queue='lance_invalidado', exclusive=False)
@@ -59,7 +59,7 @@ def make_bid():
 
 def main():
 
-    connection1 = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat=100))
+    connection1 = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat=0))
     channel1 = connection1.channel()
 
     iniciado = channel1.queue_declare(queue='', exclusive=True)

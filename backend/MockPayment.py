@@ -1,4 +1,4 @@
-from flask import Flask, Response, request, jsonify
+from flask import Flask, Response, request, jsonify, render_template
 import json, requests, sys, os
 from flask_cors import CORS
 
@@ -18,7 +18,7 @@ def generate_payment_link():
     if all(key in data for key in ("id_leilao", "amount", "webhook_url")):
         print(f" [x] Payment link generation request received: {data}\n")
         response = {
-            "payment_link": f"http://localhost:5004/mockpayment/{data['id_leilao']}",
+            "payment_link": f"http://localhost:5004/mockpayment/{data['id_leilao']}?amount={data['amount']}",
             "amount": data['amount'],
             "currency": "BRL"
         }
@@ -27,13 +27,20 @@ def generate_payment_link():
     else:
         return 'Dados incompletos para geração do link de pagamento', 400
 
-@app.route("/mockpayment/<int:id_leilao>", methods=['POST'])
+@app.route("/mockpayment/<int:id_leilao>", methods=['GET', 'POST'])
 def mock_payment(id_leilao):
     """
-    Simula pagamento sendo realizado.
+    GET: Renderiza página HTML com botões para simular pagamento.
+    POST: Simula pagamento sendo realizado.
     Espera JSON com campo: amount.
     Notifica webhook com status do pagamento (sucesso ou fracasso).
     """
+    if request.method == 'GET':
+        # Buscar informações do leilão
+        amount = next((leilao['amount'] for leilao in leiloes if leilao["id_leilao"] == int(id_leilao)), 0)
+        return render_template('index.html', id_leilao=id_leilao, amount=amount)
+    
+    # Método POST - processar pagamento
     data = request.get_json()
 
     webhook_url = next((leilao["webhook_url"] for leilao in leiloes if leilao["id_leilao"] == int(id_leilao)), None)

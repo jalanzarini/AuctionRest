@@ -1,17 +1,254 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server-Sent Events</title>
+    <title>Mock Payment - Simulador de Pagamento</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+        }
+
+        .info-box p {
+            margin: 5px 0;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .info-box strong {
+            color: #333;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .payment-button {
+            flex: 1;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .payment-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .payment-button:active {
+            transform: translateY(0);
+        }
+
+        .success-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .success-btn:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #63408a 100%);
+        }
+
+        .failure-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .failure-btn:hover {
+            background: linear-gradient(135deg, #d87de3 0%, #dc4557 100%);
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <h1>💳 Simulador de Pagamento</h1>
+        <p class="subtitle">Escolha o resultado do pagamento</p>
+
+        <div class="info-box" id="paymentInfo">
+            <p><strong>ID do Leilão:</strong> <span id="auctionId">-</span></p>
+            <p><strong>Valor:</strong> R$ <span id="amount">-</span></p>
+        </div>
+
+        <div class="button-container">
+            <button class="payment-button success-btn" onclick="processPayment('success')">
+                ✓ Pagamento Aprovado
+            </button>
+            <button class="payment-button failure-btn" onclick="processPayment('failure')">
+                ✗ Pagamento Recusado
+            </button>
+        </div>
+
+        <div id="message" class="message"></div>
+    </div>
+
     <script>
-        let source = new EventSource("{{ url_for('sse.stream', channel='1') }}");
-        source.addEventListener('message', function(event) {
-            let data = JSON.parse(event.data);
-            alert("Message: " + data.message)
-        })
+        // Extrair ID do leilão da URL
+        const pathParts = window.location.pathname.split('/');
+        const auctionId = pathParts[pathParts.length - 1];
+        
+        // Atualizar informações na página
+        document.getElementById('auctionId').textContent = auctionId;
+
+        // Simular valor do leilão (em produção, isso viria do backend)
+        // Por enquanto, vamos deixar o usuário informar
+        const urlParams = new URLSearchParams(window.location.search);
+        const amount = urlParams.get('amount') || '0.00';
+        const userId = urlParams.get('userId') || '1'; // Simular ID de usuário
+        document.getElementById('amount').textContent = parseFloat(amount).toFixed(2);
+
+        async function processPayment(status) {
+            const messageDiv = document.getElementById('message');
+            const buttons = document.querySelectorAll('.payment-button');
+            
+            // Desabilitar botões durante o processamento
+            buttons.forEach(btn => btn.classList.add('loading'));
+            buttons.forEach(btn => btn.innerHTML = '<span class="spinner"></span>');
+            
+            try {
+                const paymentAmount = parseFloat(amount);
+                
+                const response = await fetch(`/mockpayment/${auctionId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id_user: userId,
+                        amount: status === 'success' ? paymentAmount : paymentAmount - 1
+                    })
+                });
+
+                const text = await response.text();
+                
+                messageDiv.style.display = 'block';
+                if (response.ok) {
+                    messageDiv.className = 'message success';
+                    messageDiv.textContent = '✓ ' + text;
+                } else {
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = '✗ ' + text;
+                }
+
+                // Redirecionar após 2 segundos
+                setTimeout(() => {
+                    window.close();
+                }, 2000);
+                
+            } catch (error) {
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'message error';
+                messageDiv.textContent = '✗ Erro ao processar pagamento: ' + error.message;
+            } finally {
+                // Reabilitar botões
+                buttons.forEach(btn => btn.classList.remove('loading'));
+                buttons[0].innerHTML = '✓ Pagamento Aprovado';
+                buttons[1].innerHTML = '✗ Pagamento Recusado';
+            }
+        }
     </script>
 </body>
 </html>

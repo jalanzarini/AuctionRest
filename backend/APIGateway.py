@@ -77,7 +77,7 @@ def publish_sse(channel):
     return Response(status=200)
 
 def main():
-    channel = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat=100)).channel()
+    channel = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat=0)).channel()
     lance_validado_queue = channel.queue_declare(queue='', exclusive=True)
     lance_invalidado_queue = channel.queue_declare(queue='', exclusive=True)
     leilao_vencedor_queue = channel.queue_declare(queue='', exclusive=True)
@@ -95,10 +95,17 @@ def main():
     def callback(ch, method, properties, body):
         data = literal_eval(body.decode())
         print("TEXTO: ", data, interests)
-        for user in interests:
-            if data['id_leilao'] in interests[user]:
-                data['type'] = method.routing_key
-                requests.post(f"http://localhost:5000/publish/{user}", json=data)
+        if method.routing_key == 'status_pagamento':
+            data['type'] = 'status_pagamento'
+            requests.post(f"http://localhost:5000/publish/{data['id_user']}", json=data)
+        elif method.routing_key == 'link_pagamento':
+            data['type'] = 'link_pagamento'
+            requests.post(f"http://localhost:5000/publish/{data['id_user']}", json=data)
+        else:
+            for user in interests:
+                if data['id_leilao'] in interests[user]:
+                    data['type'] = method.routing_key
+                    requests.post(f"http://localhost:5000/publish/{user}", json=data)
         
         with open("logs/notifications.log", "w") as f:
             json.dump(data, f, indent=4)
